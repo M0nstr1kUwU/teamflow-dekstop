@@ -1,56 +1,156 @@
+// https://doc.rust-lang.org/book/ch03-05-control-flow.html
+use std::io::{stdin, stdout, Write};    // stdin — для чтения ввода из консоли, stdout — для вывода в консоль, Write — нужен для метода flush()
+
 fn main() {
-    let app_name: &str = "TeamFlow-dekstop";
-    println!("Приложение {app_name}");
-    // Переменные в Rust по умолчанию неизменяемы
-    let name: &str = "Oleg";
-    let greeting: &str = &build_greeting(name);
-    println!("{greeting}");
+    clear_console();
+    print!("Name> ");
+    stdout().flush().unwrap();      // flush() принудительно выводит текст в консоль сразу
+    let mut user_name = String::new();
+    stdin()
+        .read_line(&mut user_name)
+        .expect("[!] Не удалось прочитать строку");
+    let c_un: &str = user_name.trim();
+    build_greeting(c_un);
+    wait_enter();
 
-    let title: &str = "Сделать первый экран дикий KanBan";
-    let assignee: &str = "Titas";
-    let score: u32 = 11;
 
-    // let validation_result: Result<String, String> = validate_task_title(title);
-    // match validation_result {
-    //     Ok(clean_title) => {
-    //         println!("Задача создана: {clean_title}");
-    //     }
-    //     Err(error_message) => {
-    //         println!("Ошибка: {error_message}");
-    //     }
-    // }
+    let app_name: &str = "TeamFlow-desktop";    // &str — строковый срез/ссылка на строку
+    print_menu(app_name);
 
-    let validation_result: Result<String, String> = format_task_summary(title, assignee, score);
-    match validation_result {
-        Ok(clean_title) => {
-            println!("Задача создана: {clean_title}");
-        }
-        Err(error_message) => {
-            println!("[!] Ошибка: {error_message}");
+    loop {
+        print!("> ");
+        stdout().flush().unwrap();
+        let mut input = String::new();
+        stdin()
+            .read_line(&mut input)
+            .expect("[!] Не удалось прочитать строку");
+        match input.trim() {
+            "1" => {
+                clear_console();
+                char_fill(30, '=', format_task_summary);
+                wait_enter();
+            },
+            "2" => {
+                clear_console();
+                char_fill(30, '=', validate_task_title);
+                wait_enter();
+            },
+            "0" => break,
+            _ => println!("[!] Неизвестная команда")
         }
     }
 }
 
-// fn validate_task_title(title: &str) -> Result<String, String> {
-//     if title.trim().is_empty() {
-//         return Err("Название задачи не может быть пустым!".to_string());
-//     }
-//     Ok(title.trim().to_string())
-// }
+fn validate_task_title() {
+    print!("Title> ");
+    stdout().flush().unwrap();
+    let mut title = String::new();
+    stdin()
+        .read_line(&mut title)
+        .expect("[!] Не удалось прочитать строку");
 
-fn format_task_summary(title: &str, assignee: &str, score: u32) -> Result<String, String> {
-    if title.trim().is_empty() {
-        return Err("[!] Название задачи не может быть пустым!".to_string());
-    } else if assignee.trim().is_empty() {
-        return Err("[!] Исполнитель не может быть пустым!".to_string());
+    let clean_title = title.trim();
+
+    if clean_title.is_empty() {
+        println!("[!] Название задачи не может быть пустым!");
+        return;
     }
-    let result: String = format!("Задача: {title} | Исполнитель {assignee} | Вес: {score}");
-    Ok(result)
+
+    println!("Задача создана: {title}");
 }
 
-fn build_greeting(user_name: &str) -> String {
-    let message: String = format!("Привет, {user_name}, добро пожаловать в моё первое приложение");
-    // format подготавливает строку, но не печатает её сразу
-    message
-    // Без точки с запятой строка - это возвратная строка (return)
+fn format_task_summary() {
+    print!("Title> ");
+    stdout().flush().unwrap();
+    let mut title = String::new();
+    stdin()
+        .read_line(&mut title)
+        .expect("[!] Не удалось прочитать строку");
+
+    print!("Assignee> ");
+    stdout().flush().unwrap();
+    let mut assignee = String::new();
+    stdin()
+        .read_line(&mut assignee)
+        .expect("[!] Не удалось прочитать строку");
+
+    print!("Score> ");
+    stdout().flush().unwrap();
+    let mut score = String::new();
+    stdin()
+        .read_line(&mut score)
+        .expect("[!] Не удалось прочитать строку");
+
+    let clean_title = title.trim();
+    let clean_assignee = assignee.trim();
+    let clean_score = score.trim();
+
+    if clean_title.is_empty() {
+        println!("[!] Название задачи не может быть пустым!");
+        return;
+    }
+    if clean_assignee.is_empty() {
+        println!("[!] Исполнитель не может быть пустым!");
+        return;
+    }
+    let clean_score: u32 = match clean_score.parse() {
+        Ok(value) => value,
+        Err(_) => {
+            println!("[!] Вес задачи должен быть числом!");
+            return;
+        }
+    };
+    println!("Задача: {clean_title} | Исполнитель: {clean_assignee} | Вес: {clean_score}");
+}
+
+fn clear_console() {    // Это ANSI escape-код:
+    print!("\x1B[2J\x1B[1;1H");     // \x1B[2J — очистить экран, \x1B[1;1H — переместить курсор в левый верхний угол
+    stdout().flush().unwrap();
+}
+
+
+fn wait_enter() {   // Функция-пауза и всё
+    let mut pause = String::new();
+    stdin()
+        .read_line(&mut pause)
+        .expect("");
+}
+
+fn print_menu(app_name: &str) {
+    char_main_fill(30, '~');
+    println!(
+    "
+    <{app_name}>
+    1. Format Task Summary
+    2. Validate Task Title
+    0. Exit
+    "
+    );
+    char_main_fill(30, '~');
+}
+
+fn build_greeting(user_name: &str) {
+    println!("Привет, {user_name}, добро пожаловать в моё первое приложение!");
+}
+
+fn char_fill<F>(num: usize, symbol: char, func: F)      // F — тип функции
+where
+    F: FnOnce(),    // FnOnce() значит: функция не принимает аргументы и может быть вызвана один раз
+{
+    for _ in 0..num {
+        print!("{symbol}");
+    }
+    println!();
+    func();     // Вызываем переданную функцию
+    for _ in 0..num {
+        print!("{symbol}");
+    }
+    println!();
+}
+
+fn char_main_fill(num: usize, symbol: char) {
+    for _ in 0..num {
+        print!("{symbol}");
+    }
+    println!();
 }
